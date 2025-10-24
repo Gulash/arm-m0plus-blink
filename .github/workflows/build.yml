@@ -1,0 +1,42 @@
+name: Build ARM Firmware
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        target: [stm32c071]
+        # Add more targets later: [stm32c071, mspm0c1104]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install ARM GCC Toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+    
+    - name: Verify toolchain
+      run: arm-none-eabi-gcc --version
+    
+    - name: Build firmware for ${{ matrix.target }}
+      run: make TARGET=${{ matrix.target }}
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware-${{ matrix.target }}
+        path: |
+          build/${{ matrix.target }}/*.bin
+          build/${{ matrix.target }}/*.hex
+          build/${{ matrix.target }}/*.srec
+          build/${{ matrix.target }}/*.elf
+          build/${{ matrix.target }}/*.map
